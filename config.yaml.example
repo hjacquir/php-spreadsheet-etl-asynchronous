@@ -1,0 +1,22 @@
+filePath:
+  archived: 'C:\for-spreadsheet-etl-tests/archived/'
+  in_processing: 'C:\for-spreadsheet-etl-tests/in_processing/'
+  waiting: 'C:\for-spreadsheet-etl-tests/waiting/'
+  failure: 'C:\for-spreadsheet-etl-tests/failure/'
+smtp:
+  host: 'localhost:2525'
+ftp:
+  host: 'localhost'
+  username: 'root'
+  password: 'root'
+  directory: '/'
+  port: '2526'
+mails:
+  admins: ['bar@mydomain.com', 'foo@mydomain.com']
+  users: ['hello@mydomain.com', 'world@mydomain.com']
+  from: 'notifier@spreadsheetEtl.com'
+database:
+  url: 'mysql://user:secret@localhost/mydb'
+file:
+  commonMandatoryHeaders: ['LASTNAME','BIRTHDATE']
+  optionalHeaders: ['FIRSTNAME']
