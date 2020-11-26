@@ -171,7 +171,7 @@ class CollectRowAdapterStrategy implements Strategy
 
                 $cellAdapter->setRowAdapter($rowAdapter);
                 // add cell to row adapter
-                $rowAdapter->addCell($cellAdapter);
+                $rowAdapter->addCellAdapter($cellAdapter);
                 $currentCellIndex++;
             }
             // add current row adapter to row collector

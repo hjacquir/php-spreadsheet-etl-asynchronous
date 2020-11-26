@@ -111,9 +111,9 @@ class CellAdapter
      */
     public function getFriends(): array
     {
-        foreach ($this->rowAdapter->getCells() as $cell) {
-            if ($cell !== $this) {
-                array_push($this->friends, $cell);
+        foreach ($this->rowAdapter->getCellAdapters() as $cellAdapter) {
+            if ($cellAdapter !== $this) {
+                array_push($this->friends, $cellAdapter);
             }
         }
 

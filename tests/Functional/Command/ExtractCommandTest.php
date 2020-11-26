@@ -25,7 +25,6 @@ use Hj\Error\HeaderNotOnFirstRowError;
 use Hj\Error\MandatoryHeaderMissing;
 use Hj\Exception\KeyNotExist;
 use Hj\Exception\WrongTypeException;
-use Hj\File\CellAdapter;
 use Hj\File\Field\BirthDate;
 use Hj\File\RowAdapter;
 use Hj\Helper\Tests\AbstractFunctionalTestCase;
@@ -397,10 +396,9 @@ class ExtractCommandTest extends AbstractFunctionalTestCase
             /** @var RowAdapter $current */
             $current = $rowCollector->current();
 
-            $cells = $current->getCells();
-            /** @var  CellAdapter $cell */
-            foreach ($cells as $cell) {
-                $currentCellNormalizedValues[$rowCollector->key()][] = $cell->getNormalizedValue();
+            $cellAdapters = $current->getCellAdapters();
+            foreach ($cellAdapters as $cellAdapter) {
+                $currentCellNormalizedValues[$rowCollector->key()][] = $cellAdapter->getNormalizedValue();
             }
 
             $rowCollector->next();

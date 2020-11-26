@@ -140,4 +140,30 @@ class HeaderExtraction implements Strategy
 
         return false;
     }
+
+    /**
+     * @param string $columnName
+     * @return mixed
+     */
+    public function getNormalizedHeaderByColumnName(string $columnName)
+    {
+        $extractedHeaders = $this->getExtractedHeader();
+
+        $cell = $extractedHeaders[$columnName];
+
+        return $cell->getValue();
+    }
+
+    /**
+     * @param string $columnName
+     * @return mixed
+     */
+    public function getInitialHeaderByColumnName(string $columnName)
+    {
+        $extractedHeaders = $this->getInitialExtractedHeader();
+
+        $cell = $extractedHeaders[$columnName];
+
+        return $cell->getValue();
+    }
 }

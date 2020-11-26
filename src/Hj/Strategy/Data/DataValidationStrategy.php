@@ -91,7 +91,7 @@ class DataValidationStrategy implements Strategy
         $collector = $this->collectRowAdapterStrategy->getRowCollector();
         while ($collector->valid()) {
             $this->currentRowAdapter = $collector->current();
-            $this->cellAdapters = $this->currentRowAdapter->getCells();
+            $this->cellAdapters = $this->currentRowAdapter->getCellAdapters();
 
             foreach ($this->cellAdapters as $cellAdapter) {
                 foreach ($this->fields as $field) {

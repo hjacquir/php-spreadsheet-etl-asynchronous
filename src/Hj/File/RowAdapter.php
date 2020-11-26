@@ -18,35 +18,32 @@ class RowAdapter
     /**
      * @var CellAdapter[]
      */
-    private $cells = [];
+    private array $cellAdapters = [];
 
     /**
      * @var int
      */
     private $index;
 
-    /**
-     * @param CellAdapter $cell
-     */
-    public function addCell(CellAdapter $cell)
+    public function rewindCellAdapters()
     {
-        array_push($this->cells, $cell);
+        $this->cellAdapters = [];
+    }
+
+    /**
+     * @param CellAdapter $cellAdapter
+     */
+    public function addCellAdapter(CellAdapter $cellAdapter)
+    {
+        array_push($this->cellAdapters, $cellAdapter);
     }
 
     /**
      * @return CellAdapter[]
      */
-    public function getCells()
+    public function getCellAdapters()
     {
-        return $this->cells;
-    }
-
-    /**
-     * @param CellAdapter[] $cells
-     */
-    public function setCells($cells)
-    {
-        $this->cells = $cells;
+        return $this->cellAdapters;
     }
 
     /**
@@ -71,9 +68,9 @@ class RowAdapter
      */
     public function getCellNormalizedValueByField(AbstractField $field)
     {
-        foreach ($this->getCells() as $cell) {
-            if ($cell->getAssociatedHeader() === $field->getExpectedHeaderValue()) {
-                return $cell->getNormalizedValue();
+        foreach ($this->getCellAdapters() as $cellAdapter) {
+            if ($cellAdapter->getAssociatedHeader() === $field->getExpectedHeaderValue()) {
+                return $cellAdapter->getNormalizedValue();
             }
         }
 
@@ -86,9 +83,9 @@ class RowAdapter
      */
     public function getCellInitialValueByField(AbstractField $field)
     {
-        foreach ($this->getCells() as $cell) {
-            if ($cell->getAssociatedHeader() === $field->getExpectedHeaderValue()) {
-                return $cell->getCell()->getValue();
+        foreach ($this->getCellAdapters() as $cellAdapter) {
+            if ($cellAdapter->getAssociatedHeader() === $field->getExpectedHeaderValue()) {
+                return $cellAdapter->getCell()->getValue();
             }
         }
 

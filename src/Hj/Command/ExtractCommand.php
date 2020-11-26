@@ -9,6 +9,9 @@ namespace Hj\Command;
 
 use Doctrine\Instantiator\Instantiator;
 use Hj\Adapter\HtmlFormatterAdapter;
+use Hj\Builder\CellAdapterBuilder;
+use Hj\Builder\RowAdapterBuilder;
+use Hj\CellAdapterPusher;
 use Hj\Collector\CollectorIterator;
 use Hj\Collector\ErrorCollector;
 use Hj\Collector\RowCollector;
@@ -41,7 +44,9 @@ use Hj\Factory\SmtpConfigFactory;
 use Hj\File\Field\BirthDate;
 use Hj\File\Field\FirstName;
 use Hj\File\Field\LastName;
+use Hj\File\RowAdapter;
 use Hj\FileManipulator;
+use Hj\Handler\RowExtractor;
 use Hj\Helper\CatchedErrorHandler;
 use Hj\Normalizer\AccentsRemoverNormalizer;
 use Hj\Normalizer\DateStringExcelNormalizer;
@@ -404,8 +409,32 @@ class ExtractCommand extends AbstractCommand
             $parsers
         );
 
-        // collect rows with their associated cells with the appropriate header
         $instantiator = new Instantiator();
+
+        $rowExtractor = new RowExtractor(
+            $parsers,
+            new RowAdapterBuilder(
+                new CellAdapterPusher(
+                    new CellAdapterBuilder(
+                        $extractHeaderStrategy,
+                        new DateStringExcelNormalizer($birthDate),
+                        new TrimNormalizer(),
+                        new ToUpperNormalizer(),
+                        new AccentsRemoverNormalizer(),
+                        $instantiator
+                    )
+                )
+            ),
+            new RowAdapter(),
+            $inProcessingDirectory,
+            $catchedErrorHandler,
+            new GettingSheetFromFileError(),
+            $waitingDirectory,
+            new LoadingFileError(),
+            $extractHeaderStrategy,
+        );
+
+        // collect rows with their associated cells with the appropriate header
         $collectRowAdapterStrategy = new CollectRowAdapterStrategy(
             $instantiator,
             $this->errorCollector,
@@ -488,6 +517,7 @@ class ExtractCommand extends AbstractCommand
             $mandatoryHeadersChecker,
             $checkUnicityHeader,
             $rowsExtractionStrategy,
+            $rowExtractor,
             $collectRowAdapterStrategy,
             $validateDatas,
             $saveDataToDatabase,
@@ -591,7 +621,7 @@ class ExtractCommand extends AbstractCommand
                     $this->errorCollector,
                     "Spreadsheet-etl had encountered the belows errors : " . "\n\n"
                 ),
-                ),
+            ),
             new NotifyUserStrategyOnSuccesfull(
                 $mailsConfig,
                 $saveDataToDatabase,
