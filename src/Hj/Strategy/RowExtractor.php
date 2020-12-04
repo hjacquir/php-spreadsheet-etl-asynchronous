@@ -1,6 +1,6 @@
 <?php
 
-namespace Hj\Handler;
+namespace Hj\Strategy;
 
 use Doctrine\Instantiator\Exception\ExceptionInterface;
 use Hj\Builder\RowAdapterBuilder;
@@ -12,10 +12,10 @@ use Hj\File\RowAdapter;
 use Hj\Helper\CatchedErrorHandler;
 use Hj\Parser\Parser;
 use Hj\Strategy\Header\HeaderExtraction;
-use Hj\Strategy\Strategy;
 use PhpOffice\PhpSpreadsheet\Reader\IReader;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Symfony\Component\Messenger\Bridge\Doctrine\Transport\DoctrineTransport;
+use Symfony\Component\Messenger\Envelope;
 
 /**
  * Class RowExtractor
@@ -54,11 +54,6 @@ class RowExtractor implements Strategy
     private HeaderExtraction $headerExtractionStrategy;
 
     /**
-     * @var Parser
-     */
-    private Parser $parser;
-
-    /**
      * @var RowAdapter
      */
     private RowAdapter $rowAdapter;
@@ -84,7 +79,18 @@ class RowExtractor implements Strategy
     private ?IReader $appropriateReader = null;
 
     /**
+     * @var int
+     */
+    private int $maxRowSize;
+
+    /**
+     * @var DoctrineTransport
+     */
+    private DoctrineTransport $transport;
+
+    /**
      * RowExtractor constructor.
+     * @param DoctrineTransport $transport
      * @param array $parsers
      * @param RowAdapterBuilder $rowAdapterBuilder
      * @param RowAdapter $rowAdapter
@@ -96,6 +102,7 @@ class RowExtractor implements Strategy
      * @param HeaderExtraction $headerExtractionStrategy
      */
     public function __construct(
+        DoctrineTransport $transport,
         array $parsers,
         RowAdapterBuilder $rowAdapterBuilder,
         RowAdapter $rowAdapter,
@@ -107,6 +114,7 @@ class RowExtractor implements Strategy
         HeaderExtraction $headerExtractionStrategy
     )
     {
+        $this->transport = $transport;
         $this->parsers = $parsers;
         $this->rowAdapterBuilder = $rowAdapterBuilder;
         $this->rowAdapter = $rowAdapter;
@@ -126,13 +134,21 @@ class RowExtractor implements Strategy
 
     public function apply()
     {
+        $continue = false;
+
         $this->initializeReader();
         $this->loadCurrentWorkSheet();
+        $this->maxRowSize = (int) $this->currentWorksheet->getHighestRow();
 
         $rowAdapter = $this->extract();
 
         if (false === empty($rowAdapter->getCellAdapters())) {
-            return $rowAdapter;
+            $continue = true;
+            $this->transport->send(new Envelope($rowAdapter));
+        }
+
+        if ($continue) {
+            $this->apply();
         }
     }
 
@@ -145,9 +161,8 @@ class RowExtractor implements Strategy
     {
         $this->rowAdapter->rewindCellAdapters();
         $currentRowIndex = $this->rowAdapterBuilder->getCurrentRowIndex();
-        $maxRowSize = $this->currentWorksheet->getHighestRow();
 
-        if ($currentRowIndex <= (int) $maxRowSize) {
+        if ($currentRowIndex <= $this->maxRowSize) {
             try {
                 $rowIterator = $this->currentWorksheet
                     ->getRowIterator($currentRowIndex);

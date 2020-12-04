@@ -7,6 +7,7 @@
 
 namespace Hj\Command;
 
+use Doctrine\DBAL\DriverManager;
 use Doctrine\Instantiator\Instantiator;
 use Hj\Adapter\HtmlFormatterAdapter;
 use Hj\Builder\CellAdapterBuilder;
@@ -46,7 +47,7 @@ use Hj\File\Field\FirstName;
 use Hj\File\Field\LastName;
 use Hj\File\RowAdapter;
 use Hj\FileManipulator;
-use Hj\Handler\RowExtractor;
+use Hj\Strategy\RowExtractor;
 use Hj\Helper\CatchedErrorHandler;
 use Hj\Normalizer\AccentsRemoverNormalizer;
 use Hj\Normalizer\DateStringExcelNormalizer;
@@ -99,6 +100,9 @@ use Swift_SmtpTransport;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Messenger\Bridge\Doctrine\Transport\Connection as DoctrineTransportConnection;
+use Symfony\Component\Messenger\Bridge\Doctrine\Transport\DoctrineTransport;
+use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
 
 /**
  * Class ExtractCommand
@@ -411,7 +415,23 @@ class ExtractCommand extends AbstractCommand
 
         $instantiator = new Instantiator();
 
+        //@todo begin encapsulate
+        $doctrineDbalConnection = DriverManager::getConnection([
+            'url' => 'sqlite:///db/test.sqlite',
+        ]);
+        $transportDoctrineConnection = new DoctrineTransportConnection(
+            [
+                'connection' => 'doctrine://default',
+            ],
+            $doctrineDbalConnection
+        );
+        //@todo end encapsulate
+
+        $serializer = new PhpSerializer();
+        $doctrineTransport = new DoctrineTransport($transportDoctrineConnection, $serializer);
+
         $rowExtractor = new RowExtractor(
+            $doctrineTransport,
             $parsers,
             new RowAdapterBuilder(
                 new CellAdapterPusher(
